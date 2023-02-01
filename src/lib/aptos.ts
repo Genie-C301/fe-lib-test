@@ -10,7 +10,8 @@ import {
 } from "@aptos-labs/wallet-adapter-core";
 import { getErrorMessage } from "../utils";
 
-export const DEVNET_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
+// const DEVNET_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
+export const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com";
 const NETWORK_GRAPHQL_ENDPOINT =
   "https://indexer-devnet.staging.gcp.aptosdev.com/v1/graphql";
 
@@ -94,24 +95,85 @@ export default class Client {
     }
   }
 
+  async fetchCoins() {
+    const address = this.wallet.account?.address || "";
+    try {
+      if (address !== "") {
+        let coinStoreType = "0x1::coin::CoinStore";
+        let balances: { [key: string]: any }[] = [];
+        let resources = await this.aptosClient.getAccountResources(address);
+        let coinResources = resources.filter((r) =>
+          r.type.startsWith(coinStoreType)
+        );
+        coinResources.forEach((resource) =>
+          balances.push({
+            coin: resource?.type,
+            //@ts-ignore
+            value: resource?.data?.coin?.value,
+          })
+        );
+        return {
+          success: true,
+          balances,
+        };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        err,
+      };
+    }
+  }
+
+  /**
+   * checks if the coinType is valid and return coinInfo
+   * @param coinType Resource type
+   * @returns coinInfo
+   */
+  async getCoinInfo(coinType: string) {
+    try {
+      let address = coinType.split("::")[0];
+      let coinInfoType = `0x1::coin::CoinInfo<${coinType}>`;
+      let resource = await this.aptosClient.getAccountResource(
+        address,
+        coinInfoType
+      );
+      return {
+        success: true,
+        coinInfo: resource.data,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        err,
+      };
+    }
+  }
+
   async registerCoin(
-    coinTypeAddress: HexString,
-    coinReceiver: AptosAccount
+    coinTypeAddress: string,
+    coinType: string
   ): Promise<{ msg: string; success: boolean }> {
-    const payload: Types.TransactionPayload = {
-      type: "entry_function_payload",
-      function: "0x1::coin::register",
-      type_arguments: [`0x1::aptos_coin::AptosCoin`],
-      arguments: [],
-    };
+    try {
+      const coinTypeAddressHex = new HexString(coinTypeAddress);
+      const payload: Types.TransactionPayload = {
+        type: "entry_function_payload",
+        function: "0x1::managed_coin::register",
+        type_arguments: [`${coinTypeAddressHex.hex()}::${coinType}`],
+        arguments: [],
+      };
 
-    const response = await this.wallet.signAndSubmitTransaction(payload);
-    await this.aptosClient.waitForTransaction(response?.hash || "");
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      await this.aptosClient.waitForTransaction(response?.hash || "");
 
-    return {
-      msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
-      success: true,
-    };
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
   }
 
   async transferApt(
@@ -137,6 +199,45 @@ export default class Client {
     }
   }
 
+  async transfer(
+    coinTypeAddress: string,
+    coinType: string,
+    recipient_address: string,
+    amount: string,
+    decimal: string
+  ) {
+    try {
+      const coinTypeAddressHex = new HexString(coinTypeAddress);
+      if (
+        recipient_address ===
+        //@ts-ignore
+        this.wallet.account?.address
+      ) {
+        return new Error("cannot transfer coins to self");
+      }
+
+      const payload: Types.TransactionPayload = {
+        function: "0x1::coin::transfer",
+        type: "entry_function_payload",
+        type_arguments: [`${coinTypeAddressHex.hex()}::${coinType}`],
+        arguments: [
+          recipient_address,
+          Number(this.shift(amount, Number("-" + decimal))),
+        ],
+      };
+
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      await this.aptosClient.waitForTransaction(response?.hash || "");
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
+  }
+
   async fetchGraphQL(
     operationsDoc: string,
     operationName: string,
@@ -152,27 +253,6 @@ export default class Client {
     });
 
     return await result.json();
-  }
-
-  async fetchCoins(): Promise<{ coin_type: string; amount: number }[]> {
-    const operationsDoc = `
-  query fetchCoins {
-    coin_balances(
-      where: {owner_address: {_eq: "${this.wallet.account?.address}"}}
-      limit: 1
-      order_by: {transaction_timestamp: desc}
-    ) {
-      amount
-      coin_type
-      owner_address
-      transaction_timestamp
-    }
-  }
-`;
-
-    const data = await this.fetchGraphQL(operationsDoc, "fetchCoins", {});
-
-    return data.data.coin_balances;
   }
 
   /**

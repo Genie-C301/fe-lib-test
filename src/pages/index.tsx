@@ -68,6 +68,25 @@ export default function App() {
     console.log(nfts);
     alert(nfts);
   };
+  const registerCoin = async () => {
+    const msg = await client.registerCoin(
+      "0xff523dac1ffe4762abc0ff7d9f27d5187dd0424d5da9e806d8a6dd9737a60b80",
+      "moon_coin::MoonCoin"
+    );
+    console.log(msg);
+    alert(msg);
+  };
+  const transferCoin = async () => {
+    const msg = await client.transfer(
+      "0xff523dac1ffe4762abc0ff7d9f27d5187dd0424d5da9e806d8a6dd9737a60b80",
+      "moon_coin::MoonCoin",
+      "0xb30d58ea44961e0d004fa0d7df0459eb2cacfbbe32545dce923048360c518f58",
+      "0.00001",
+      "6"
+    );
+    console.log(msg);
+    alert(msg);
+  };
 
   const onSignTransaction = async () => {
     const payload: Types.TransactionPayload = {
@@ -241,6 +260,28 @@ export default function App() {
                   disabled={!connected}
                 >
                   fetch txs
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={registerCoin}
+                  disabled={!connected}
+                >
+                  register coin
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={transferCoin}
+                  disabled={!connected}
+                >
+                  transfer coin
                 </button>
               </div>
             </td>
