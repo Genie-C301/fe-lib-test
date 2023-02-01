@@ -51,6 +51,11 @@ export default function App() {
     );
     alert(msg.msg);
   };
+  const fetchCoins = async () => {
+    const coins = await client.fetchCoins();
+    console.log(coins);
+    alert(coins);
+  };
 
   const onSignTransaction = async () => {
     const payload: Types.TransactionPayload = {
@@ -189,6 +194,17 @@ export default function App() {
                   disabled={!connected}
                 >
                   Sign Message and Verify
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={fetchCoins}
+                  disabled={!connected}
+                >
+                  fetch coins
                 </button>
               </div>
             </td>

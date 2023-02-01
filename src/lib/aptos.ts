@@ -11,6 +11,8 @@ import {
 import { getErrorMessage } from "../utils";
 
 const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com/v1";
+const NETWORK_GRAPHQL_ENDPOINT =
+  "https://indexer-devnet.staging.gcp.aptosdev.com/v1/graphql";
 
 interface WalletContextState {
   connected: boolean;
@@ -103,5 +105,43 @@ export default class Client {
       const msg = getErrorMessage(error);
       return { msg: msg, success: false };
     }
+  }
+
+  async fetchGraphQL(
+    operationsDoc: string,
+    operationName: string,
+    variables: any
+  ) {
+    const result = await fetch(NETWORK_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      body: JSON.stringify({
+        query: operationsDoc,
+        variables: variables,
+        operationName: operationName,
+      }),
+    });
+
+    return await result.json();
+  }
+
+  async fetchCoins(): Promise<{ coin_type: string; amount: number }[]> {
+    const operationsDoc = `
+  query fetchCoins {
+    coin_balances(
+      where: {owner_address: {_eq: "${this.wallet.account?.address}"}}
+      limit: 1
+      order_by: {transaction_timestamp: desc}
+    ) {
+      amount
+      coin_type
+      owner_address
+      transaction_timestamp
+    }
+  }
+`;
+
+    const data = await this.fetchGraphQL(operationsDoc, "fetchCoins", {});
+
+    return data.data.coin_balances;
   }
 }
