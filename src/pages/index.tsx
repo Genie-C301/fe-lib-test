@@ -51,10 +51,22 @@ export default function App() {
     );
     alert(msg.msg);
   };
+
+  const fetchTxs = async () => {
+    const txs = await client.accountTransactions();
+    console.log(txs);
+    alert(txs);
+  };
+
   const fetchCoins = async () => {
     const coins = await client.fetchCoins();
     console.log(coins);
     alert(coins);
+  };
+  const fetchNfts = async () => {
+    const nfts = await client.fetchTokens();
+    console.log(nfts);
+    alert(nfts);
   };
 
   const onSignTransaction = async () => {
@@ -205,6 +217,30 @@ export default function App() {
                   disabled={!connected}
                 >
                   fetch coins
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={fetchNfts}
+                  disabled={!connected}
+                >
+                  fetch Nfts
+                </button>
+              </div>
+              <div>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={fetchTxs}
+                  disabled={!connected}
+                >
+                  fetch txs
                 </button>
               </div>
             </td>
