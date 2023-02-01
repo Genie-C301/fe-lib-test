@@ -9,15 +9,25 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aptos-labs/wallet-adapter-ant-design": "^0.1.1",
+    "@aptos-labs/wallet-adapter-core": "^0.2.3",
+    "@aptos-labs/wallet-adapter-react": "^0.2.3",
+    "@martianwallet/aptos-wallet-adapter": "^0.0.3",
     "@next/font": "13.1.4",
-    "@types/node": "18.11.18",
-    "@types/react": "18.0.27",
-    "@types/react-dom": "18.0.10",
+    "@pontem/wallet-adapter-plugin": "^0.1.4",
+    "antd": "^5.1.7",
+    "aptos": "^1.6.0",
     "eslint": "8.32.0",
     "eslint-config-next": "13.1.4",
     "next": "13.1.4",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.12",
+    "@types/node": "18.11.18",
+    "@types/react": "18.0.27",
+    "@types/react-dom": "18.0.10",
     "typescript": "4.9.4"
   }
 }
