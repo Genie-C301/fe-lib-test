@@ -65,12 +65,13 @@ export default class Client {
     return temp.length == 0 ? "0" : temp.join("");
   }
 
-  async accountTransactions() {
+  async accountTransactions(start: number, limit: number) {
     const accountAddress = this.wallet.account?.address;
     try {
       const data = await this.aptosClient.getAccountTransactions(
         //@ts-ignore
-        accountAddress
+        accountAddress,
+        { start, limit }
       );
       const transactions = data.map((item: { [key: string]: any }) => ({
         data: item.payload,
