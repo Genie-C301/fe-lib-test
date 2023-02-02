@@ -706,6 +706,42 @@ export default class Client {
       bytes.push(parseInt(hex.substr(c, 2), 16));
     return bytes;
   }
+
+  async claimToken(
+    destAddress: string,
+    creatorAddress: string,
+    collectionName: string,
+    tokenName: string,
+    tokenPropertyVersion: string,
+    amount: string
+  ): Promise<{ msg: string; success: boolean }> {
+    try {
+      const payload: Types.TransactionPayload = {
+        type: "entry_function_payload",
+        function: `${new HexString(destAddress)}::genie_account::claim_token`,
+        type_arguments: [],
+        arguments: [
+          new HexString(creatorAddress).hex(),
+          collectionName,
+          tokenName,
+          Number(tokenPropertyVersion),
+          Number(amount),
+        ],
+      };
+
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      await this.aptosClient.waitForTransaction(response?.hash || "");
+
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
+      console.log(err);
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
+  }
 }
 
 const private_key_hex_string =

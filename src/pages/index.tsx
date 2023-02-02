@@ -158,8 +158,8 @@ export default function App() {
 
   const optInAndTransferToken = async () => {
     const result = await client.optInAndTransferToken(
-      "2473fa762bdb1f90612302f512f509e9c0bf1f171d1a54acea50b696c9ea327d",
-      "16dbde3b739446b612511af6bcf9682c121372fdbf30243403fd241149f0d38b",
+      "04470906b5da2acd4e617cc0bd008f1a95fb805e6b8cf4ef00d544c2eee0008a",
+      "0x27ea276ff7c25a49719751f5d73016a5830216bebf23c3a273d0f8371d4bb213",
       "Fcollection2",
       "Ftoken2",
       "0",
@@ -180,8 +180,8 @@ export default function App() {
   const verify = async () => {
     const msg = await client.verify(
       false,
-      "0163197a72f0e30c2ef82a60e4ed7b174b17929f48dcdf512c2716858b487842",
-      "AD4F35158A145B54D8F5EF0A073E564FA62FB48088A2078F76E3EA7BD561D40C"
+      "04470906b5da2acd4e617cc0bd008f1a95fb805e6b8cf4ef00d544c2eee0008a",
+      "9F182F3FAD7FA8852F233594AFFCD4A4ECE2421BBABD99B6B1669B8918E81086"
     );
     console.log(msg);
     alert(msg);
@@ -193,6 +193,19 @@ export default function App() {
     );
     console.log(msg);
     alert(msg);
+  };
+
+  const claimToken = async () => {
+    const result = await client.claimToken(
+      "04470906b5da2acd4e617cc0bd008f1a95fb805e6b8cf4ef00d544c2eee0008a",
+      "0x27ea276ff7c25a49719751f5d73016a5830216bebf23c3a273d0f8371d4bb213",
+      "Fcollection2",
+      "Ftoken2",
+      "0",
+      "1"
+    );
+    console.log(result);
+    alert(result);
   };
 
   return (
@@ -407,6 +420,17 @@ export default function App() {
                   disabled={!connected}
                 >
                   claim_coin
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={claimToken}
+                  disabled={!connected}
+                >
+                  claim_token
                 </button>
               </div>
             </td>
