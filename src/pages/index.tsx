@@ -139,7 +139,7 @@ export default function App() {
 
   const registerAndTransferCoin = async () => {
     const msg = await client.registerAndTransferCoin(
-      "377535320be4672c6be7d0763770bdf336df69bc316629af7a35f99c965cbd86",
+      "2473fa762bdb1f90612302f512f509e9c0bf1f171d1a54acea50b696c9ea327d",
       "ff523dac1ffe4762abc0ff7d9f27d5187dd0424d5da9e806d8a6dd9737a60b80",
       "moon_coin::MoonCoin",
       "1"
@@ -150,12 +150,33 @@ export default function App() {
 
   const createToken = async () => {
     const result = await client.createToken(
-      "Fcollection1",
-      "Ftoken1",
-      "https://www.topaz.so/cdn-cgi/image/width=512,quality=90,fit=scale-down,anim=false,onerror=redirect/https://ipfs.topaz.so//ipfs/bafybeig6bepf5ci5fyysxlfefpjzwkfp7sarj6ed2f5a34kowgc6qenjfa/4535.png"
+      "Fcollection2",
+      "Ftoken2",
+      "https://www.topaz.so/cdn-cgi/image/width=512,quality=90,fit=scale-down,anim=false,onerror=redirect/https://ipfs.topaz.so//ipfs/bafybeig6bepf5ci5fyysxlfefpjzwkfp7sarj6ed2f5a34kowgc6qenjfa/747.png"
     );
     console.log(result);
     alert(result);
+  };
+
+  const optInAndTransferToken = async () => {
+    const result = await client.optInAndTransferToken(
+      "2473fa762bdb1f90612302f512f509e9c0bf1f171d1a54acea50b696c9ea327d",
+      "16dbde3b739446b612511af6bcf9682c121372fdbf30243403fd241149f0d38b",
+      "Fcollection2",
+      "Ftoken2",
+      "0",
+      "1"
+    );
+    console.log(result);
+    alert(result);
+  };
+
+  const getTokenData = async () => {
+    await client.getTokenData(
+      "0x4948a44d308ebccfb26e541d7e0b444514435eb4501a8cbaa836be1129a2527b",
+      "Fcollection1",
+      "Ftoken1"
+    );
   };
 
   return (
@@ -267,7 +288,7 @@ export default function App() {
                   onClick={fetchNfts}
                   disabled={!connected}
                 >
-                  fetch Nfts
+                  fetch Tokens
                 </button>
               </div>
               <div>
@@ -325,6 +346,29 @@ export default function App() {
                   disabled={!connected}
                 >
                   create token
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={getTokenData}
+                  disabled={!connected}
+                >
+                  get token data
+                </button>
+
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={optInAndTransferToken}
+                  disabled={!connected}
+                >
+                  transfer Token
                 </button>
               </div>
             </td>

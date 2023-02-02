@@ -18,7 +18,7 @@ import {
 import { getErrorMessage } from "../utils";
 
 // const DEVNET_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
-export const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+export const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com/v1";
 const FAUCET_URL =
   process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptoslabs.com";
 const NETWORK_GRAPHQL_ENDPOINT =
@@ -499,6 +499,7 @@ export default class Client {
       await this.aptosClient.waitForTransaction(txnHash1, {
         checkSuccess: true,
       });
+
       const txnHash2 = await this.tokenClient.createToken(
         alice,
         collectionName,
@@ -524,12 +525,73 @@ export default class Client {
         checkSuccess: true,
       });
 
+      const walletBalance = await this.tokenClient.getTokenForAccount(
+        //@ts-ignore
+        this.wallet.account?.address,
+        tokenId
+      );
+      console.log("wallet balance : ", walletBalance);
+
       return { success: true, msg: txnHash3 };
     } catch (err) {
       return {
         success: false,
         err,
       };
+    }
+  }
+
+  async getTokenData(
+    creatorAddress: string,
+    collectionName: string,
+    tokenName: string
+  ) {
+    const tokenData = await this.tokenClient.getTokenData(
+      //@ts-ignore
+      new HexString(creatorAddress),
+      collectionName,
+      tokenName
+    );
+    console.log(`Wallet's token data: `, tokenData); // <:!:section_8
+  }
+
+  async optInAndTransferToken(
+    destAddress: string,
+    creatorAddress: string,
+    collectionName: string,
+    tokenName: string,
+    tokenPropertyVersion: string,
+    amount: string
+  ): Promise<{ msg: string; success: boolean }> {
+    try {
+      const payload: Types.TransactionPayload = {
+        type: "entry_function_payload",
+        function: `${new HexString(
+          destAddress
+        )}::genie_account::opt_in_and_transfer_token_entry`,
+        type_arguments: [],
+        arguments: [
+          new HexString(creatorAddress).hex(),
+          collectionName,
+          tokenName,
+          Number(tokenPropertyVersion),
+          Number(amount),
+        ],
+      };
+      console.log("here");
+
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      console.log("het");
+      await this.aptosClient.waitForTransaction(response?.hash || "");
+
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
+      console.log(err);
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
     }
   }
 }
