@@ -139,10 +139,8 @@ export default function App() {
 
   const registerAndTransferCoin = async () => {
     const msg = await client.registerAndTransferCoin(
-      "2473fa762bdb1f90612302f512f509e9c0bf1f171d1a54acea50b696c9ea327d",
-      "ff523dac1ffe4762abc0ff7d9f27d5187dd0424d5da9e806d8a6dd9737a60b80",
-      "moon_coin::MoonCoin",
-      "1"
+      "0163197a72f0e30c2ef82a60e4ed7b174b17929f48dcdf512c2716858b487842",
+      "10000000"
     );
     console.log(msg);
     alert(msg);
@@ -182,8 +180,16 @@ export default function App() {
   const verify = async () => {
     const msg = await client.verify(
       false,
-      "9ad829b327b5a280986517dae31a7c00e327d30d4e618b446a085f293b4e2258",
-      "91D994FBF7DEB4C8541A7E5BF9E7C3EC89293FAEE6D5407FE8E90C4F7D9D6C74"
+      "0163197a72f0e30c2ef82a60e4ed7b174b17929f48dcdf512c2716858b487842",
+      "AD4F35158A145B54D8F5EF0A073E564FA62FB48088A2078F76E3EA7BD561D40C"
+    );
+    console.log(msg);
+    alert(msg);
+  };
+
+  const claim = async () => {
+    const msg = await client.claim_coin(
+      "0163197a72f0e30c2ef82a60e4ed7b174b17929f48dcdf512c2716858b487842"
     );
     console.log(msg);
     alert(msg);
@@ -390,6 +396,17 @@ export default function App() {
                   disabled={!connected}
                 >
                   verify
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={claim}
+                  disabled={!connected}
+                >
+                  claim_coin
                 </button>
               </div>
             </td>

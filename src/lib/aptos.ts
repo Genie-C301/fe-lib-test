@@ -457,18 +457,15 @@ export default class Client {
 
   async registerAndTransferCoin(
     destAddress: string,
-    coinTypeAddress: string,
-    coinType: string,
     amount: string
   ): Promise<{ msg: string; success: boolean }> {
     try {
-      const coinTypeAddressHex = new HexString(coinTypeAddress);
       const payload: Types.TransactionPayload = {
         type: "entry_function_payload",
         function: `${new HexString(
           destAddress
         )}::genie_account::register_and_transfer_coin_entry`,
-        type_arguments: [`${coinTypeAddressHex.hex()}::${coinType}`],
+        type_arguments: [`0x1::aptos_coin::AptosCoin`],
         arguments: [Number(amount)],
       };
 
@@ -675,6 +672,28 @@ export default class Client {
       }
     } catch (err) {
       console.log(err);
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
+  }
+
+  async claim_coin(destAddress: string) {
+    try {
+      const payload: Types.TransactionPayload = {
+        type: "entry_function_payload",
+        function: `${new HexString(destAddress)}::genie_account::claim_coin`,
+        type_arguments: [`0x1::aptos_coin::AptosCoin`],
+        arguments: [],
+      };
+
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      await this.aptosClient.waitForTransaction(response?.hash || "");
+
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
       const msg = getErrorMessage(err);
       return { msg: msg, success: false };
     }
