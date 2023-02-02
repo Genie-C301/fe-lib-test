@@ -137,6 +137,27 @@ export default function App() {
     }
   };
 
+  const registerAndTransferCoin = async () => {
+    const msg = await client.registerAndTransferCoin(
+      "377535320be4672c6be7d0763770bdf336df69bc316629af7a35f99c965cbd86",
+      "ff523dac1ffe4762abc0ff7d9f27d5187dd0424d5da9e806d8a6dd9737a60b80",
+      "moon_coin::MoonCoin",
+      "1"
+    );
+    console.log(msg);
+    alert(msg);
+  };
+
+  const createToken = async () => {
+    const result = await client.createToken(
+      "Fcollection1",
+      "Ftoken1",
+      "https://www.topaz.so/cdn-cgi/image/width=512,quality=90,fit=scale-down,anim=false,onerror=redirect/https://ipfs.topaz.so//ipfs/bafybeig6bepf5ci5fyysxlfefpjzwkfp7sarj6ed2f5a34kowgc6qenjfa/4535.png"
+    );
+    console.log(result);
+    alert(result);
+  };
+
   return (
     <div>
       {successAlertMessage.length > 0 && (
@@ -282,6 +303,28 @@ export default function App() {
                   disabled={!connected}
                 >
                   transfer coin
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={registerAndTransferCoin}
+                  disabled={!connected}
+                >
+                  register and transfer coin
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={createToken}
+                  disabled={!connected}
+                >
+                  create token
                 </button>
               </div>
             </td>

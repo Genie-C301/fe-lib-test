@@ -1,4 +1,11 @@
-import { AptosClient as Aptos, Types, HexString, AptosAccount } from "aptos";
+import {
+  AptosClient as Aptos,
+  Types,
+  HexString,
+  AptosAccount,
+  TokenClient,
+  FaucetClient,
+} from "aptos";
 import {
   AccountInfo,
   NetworkInfo,
@@ -12,6 +19,8 @@ import { getErrorMessage } from "../utils";
 
 // const DEVNET_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
 export const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com";
+const FAUCET_URL =
+  process.env.APTOS_FAUCET_URL || "https://faucet.devnet.aptoslabs.com";
 const NETWORK_GRAPHQL_ENDPOINT =
   "https://indexer-devnet.staging.gcp.aptosdev.com/v1/graphql";
 
@@ -37,12 +46,16 @@ interface WalletContextState {
 
 export default class Client {
   aptosClient: Aptos;
+  tokenClient: TokenClient;
+  faucetClient: FaucetClient;
   wallet: WalletContextState;
 
   constructor(wallet: WalletContextState) {
     this.aptosClient = new Aptos(DEVNET_NODE_URL, {
       WITH_CREDENTIALS: false,
     });
+    this.tokenClient = new TokenClient(this.aptosClient);
+    this.faucetClient = new FaucetClient(DEVNET_NODE_URL, FAUCET_URL);
     this.wallet = wallet;
   }
 
@@ -425,5 +438,98 @@ export default class Client {
     }
 
     return response.json();
+  }
+
+  //////////////////
+
+  async registerAndTransferCoin(
+    destAddress: string,
+    coinTypeAddress: string,
+    coinType: string,
+    amount: string
+  ): Promise<{ msg: string; success: boolean }> {
+    try {
+      const coinTypeAddressHex = new HexString(coinTypeAddress);
+      const payload: Types.TransactionPayload = {
+        type: "entry_function_payload",
+        function: `${new HexString(
+          destAddress
+        )}::genie_account::register_and_transfer_coin_entry`,
+        type_arguments: [`${coinTypeAddressHex.hex()}::${coinType}`],
+        arguments: [Number(amount)],
+      };
+
+      const response = await this.wallet.signAndSubmitTransaction(payload);
+      await this.aptosClient.waitForTransaction(response?.hash || "");
+
+      return {
+        msg: `https://explorer.aptoslabs.com/txn/${response?.hash}`,
+        success: true,
+      };
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
+  }
+
+  async createToken(
+    collectionName: string,
+    tokenName: string,
+    tokenUri: string
+  ) {
+    try {
+      const alice = new AptosAccount();
+      await this.faucetClient.fundAccount(alice.address(), 100_000_000);
+      const tokenPropertyVersion = 0;
+      const tokenId = {
+        token_data_id: {
+          creator: alice.address().hex(),
+          collection: collectionName,
+          name: tokenName,
+        },
+        property_version: `${tokenPropertyVersion}`,
+      };
+
+      const txnHash1 = await this.tokenClient.createCollection(
+        alice,
+        collectionName,
+        "Aptos hackathon fake collection",
+        "https://aptos.dev"
+      ); // <:!:section_4
+      await this.aptosClient.waitForTransaction(txnHash1, {
+        checkSuccess: true,
+      });
+      const txnHash2 = await this.tokenClient.createToken(
+        alice,
+        collectionName,
+        tokenName,
+        "Aptos hackathon face token",
+        1,
+        tokenUri
+      ); // <:!:section_5
+      await this.aptosClient.waitForTransaction(txnHash2, {
+        checkSuccess: true,
+      });
+      const txnHash3 = await this.tokenClient.transferWithOptIn(
+        alice,
+        alice.address(),
+        collectionName,
+        tokenName,
+        tokenPropertyVersion,
+        //@ts-ignore
+        this.wallet.account?.address,
+        1
+      );
+      await this.aptosClient.waitForTransaction(txnHash3, {
+        checkSuccess: true,
+      });
+
+      return { success: true, msg: txnHash3 };
+    } catch (err) {
+      return {
+        success: false,
+        err,
+      };
+    }
   }
 }
