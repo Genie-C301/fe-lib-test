@@ -5,6 +5,8 @@ import {
   AptosAccount,
   TokenClient,
   FaucetClient,
+  TxnBuilderTypes,
+  BCS,
 } from "aptos";
 import {
   AccountInfo,
@@ -16,6 +18,16 @@ import {
   SignMessageResponse,
 } from "@aptos-labs/wallet-adapter-core";
 import { getErrorMessage } from "../utils";
+
+const {
+  AccountAddress,
+  TypeTagStruct,
+  EntryFunction,
+  StructTag,
+  TransactionPayloadEntryFunction,
+  RawTransaction,
+  ChainId,
+} = TxnBuilderTypes;
 
 // const DEVNET_NODE_URL = "https://fullnode.mainnet.aptoslabs.com/v1";
 export const DEVNET_NODE_URL = "https://fullnode.devnet.aptoslabs.com/v1";
@@ -407,6 +419,7 @@ export default class Client {
         tableItemRequest
       );
       token.collection = token_data_id.collection;
+      token.creator = token_data_id.creator;
       return token;
     } catch (err) {
       return null;
@@ -578,10 +591,8 @@ export default class Client {
           Number(amount),
         ],
       };
-      console.log("here");
 
       const response = await this.wallet.signAndSubmitTransaction(payload);
-      console.log("het");
       await this.aptosClient.waitForTransaction(response?.hash || "");
 
       return {
@@ -594,4 +605,89 @@ export default class Client {
       return { msg: msg, success: false };
     }
   }
+
+  async verify(
+    verifiedBefore: boolean,
+    myAddress: string,
+    privateKeyString?: string
+  ) {
+    try {
+      if (verifiedBefore) {
+      } else {
+        const pastAuth = new AptosAccount(
+          //@ts-ignore
+          Uint8Array.from(this.hexToBytes(privateKeyString))
+        );
+
+        console.log(pastAuth.address());
+
+        const entryFunctionPayload = new TransactionPayloadEntryFunction(
+          EntryFunction.natural(
+            // Fully qualified module name, `AccountAddress::ModuleName`
+            `${new HexString(myAddress)}::genie_account`,
+            // Module function
+            "verify",
+            // The coin type to transfer
+            [],
+            // Arguments for function `transfer`: receiver account address and amount to transfer
+            [
+              BCS.bcsToBytes(
+                AccountAddress.fromHex(
+                  //@ts-ignore
+                  new HexString(this.wallet.account?.address)
+                )
+              ),
+            ]
+          )
+        );
+
+        const [{ sequence_number: sequenceNumber }, chainId] =
+          await Promise.all([
+            this.aptosClient.getAccount(pastAuth.address()),
+            this.aptosClient.getChainId(),
+          ]);
+
+        const rawTxn = new RawTransaction(
+          // Transaction sender account address
+          AccountAddress.fromHex(pastAuth.address()),
+          BigInt(sequenceNumber),
+          entryFunctionPayload,
+          // Max gas unit to spend
+          BigInt(2000),
+          // Gas price per unit
+          BigInt(100),
+          // Expiration timestamp. Transaction is discarded if it is not executed within 10 seconds from now.
+          BigInt(Math.floor(Date.now() / 1000) + 10),
+          new ChainId(chainId)
+        );
+
+        // Sign the raw transaction with account1's private key
+        const bcsTxn = Aptos.generateBCSTransaction(pastAuth, rawTxn);
+
+        const tx = await this.aptosClient.submitSignedBCSTransaction(bcsTxn);
+
+        await this.aptosClient.waitForTransaction(tx.hash);
+
+        return {
+          msg: `https://explorer.aptoslabs.com/txn/${tx.hash}`,
+          success: true,
+        };
+      }
+    } catch (err) {
+      console.log(err);
+      const msg = getErrorMessage(err);
+      return { msg: msg, success: false };
+    }
+  }
+
+  hexToBytes(hex: string) {
+    let bytes = [];
+    for (let c = 0; c < hex.length; c += 2)
+      //@ts-ignore
+      bytes.push(parseInt(hex.substr(c, 2), 16));
+    return bytes;
+  }
 }
+
+const private_key_hex_string =
+  "C13EC76463E58ABA752FA7B4376F48745F3F99FC6287C4E5EEEBF784819ACD78";

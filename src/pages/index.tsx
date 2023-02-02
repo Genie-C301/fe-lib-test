@@ -179,6 +179,16 @@ export default function App() {
     );
   };
 
+  const verify = async () => {
+    const msg = await client.verify(
+      false,
+      "9ad829b327b5a280986517dae31a7c00e327d30d4e618b446a085f293b4e2258",
+      "91D994FBF7DEB4C8541A7E5BF9E7C3EC89293FAEE6D5407FE8E90C4F7D9D6C74"
+    );
+    console.log(msg);
+    alert(msg);
+  };
+
   return (
     <div>
       {successAlertMessage.length > 0 && (
@@ -369,6 +379,17 @@ export default function App() {
                   disabled={!connected}
                 >
                   transfer Token
+                </button>
+                <button
+                  className={`bg-orange-500 text-white font-bold py-2 px-4 rounded mr-4 ${
+                    !connected
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-orange-700"
+                  }`}
+                  onClick={verify}
+                  disabled={!connected}
+                >
+                  verify
                 </button>
               </div>
             </td>
